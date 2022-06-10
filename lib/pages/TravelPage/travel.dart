@@ -1,9 +1,16 @@
+import 'dart:collection';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:onestop_dev/globals.dart';
 import 'package:onestop_dev/globals/my_colors.dart';
+import 'package:onestop_dev/models/travel/bus_stop.dart';
 import 'package:onestop_dev/widgets/mapBox.dart';
 import 'package:onestop_dev/widgets/travel/bus_tile.dart';
 import 'data.dart';
+
+List <BusStop> stops = [];
 
 class TravelPage extends StatefulWidget {
   const TravelPage({Key? key}) : super(key: key);
@@ -12,6 +19,22 @@ class TravelPage extends StatefulWidget {
 }
 
 class _TravelPageState extends State<TravelPage> {
+
+  // Fetch content from the json file
+  Future<void> readJson() async {
+    final String response = await rootBundle.loadString('lib/globals/busstops.json');
+    final data = await json.decode(response);
+    setState(() {});
+    data.forEach((element) => stops.add(BusStop.fromJson(element)));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    stops.clear();
+    readJson();
+  }
+
   int selectBusesorStops = 0;
   bool isCity = false;
   bool isCampus = false;
@@ -39,6 +62,7 @@ class _TravelPageState extends State<TravelPage> {
             istravel: false,
           ),
           SizedBox(height: 10,),
+          //If bus selected
           (selectedIndex == 0)
               ? Column(
             children: [
@@ -114,17 +138,19 @@ class _TravelPageState extends State<TravelPage> {
                   ),
                 ],
               ),
+
+              //If viewing bus stop info
               (selectBusesorStops == 0)
                   ? Column(
-                children: BusStops.map((item) {
+                children: stops.map((item) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
-                          isSelected = item['ind'];
-                          lat = item['lat'];
-                          long = item['long'];
+                          isSelected = 0;
+                          lat = item.lat;
+                          long = item.long;
                         });
                       },
                       child: Container(
@@ -133,7 +159,7 @@ class _TravelPageState extends State<TravelPage> {
                           color: Color.fromRGBO(34, 36, 41, 1),
                           borderRadius: BorderRadius.all(Radius.circular(20)),
                           border: Border.all(
-                              color: (isSelected == item['ind'])
+                              color: (isSelected == 0)
                                   ? Color.fromRGBO(101, 144, 210, 1)
                                   : Color.fromRGBO(34, 36, 41, 1)),
                         ),
@@ -149,14 +175,14 @@ class _TravelPageState extends State<TravelPage> {
                             ),
                           ),
                           title: Text(
-                            item['name'],
+                            item.name,
                             style: const TextStyle(color: kWhite),
                           ),
                           subtitle: Text(
-                            item['distance'],
+                            'distance',
                             style: const TextStyle(color: Color.fromRGBO(119, 126, 141, 1)),
                           ),
-                          trailing: (item['status'] == 'left')
+                          trailing: /*(item['status'] == 'left')*/(1== 1)
                               ? Column(
                             mainAxisAlignment:
                             MainAxisAlignment.center,
@@ -166,13 +192,15 @@ class _TravelPageState extends State<TravelPage> {
                                 style: TextStyle(color: Color.fromRGBO(135, 145, 165, 1)),
                               ),
                               Text(
-                                item['time'],
+                                /*item['time'],*/
+                                'time',
                                 style: const TextStyle(color: Color.fromRGBO(195, 198, 207, 1)),
                               ),
                             ],
                           )
                               : Text(
-                            item['time'],
+                            /*item['time'],*/
+                            'time',
                             style: TextStyle(color: lBlue2),
                           ),
                         ),
@@ -181,6 +209,7 @@ class _TravelPageState extends State<TravelPage> {
                   );
                 }).toList(),
               ) : SizedBox(),
+              //If viewing Bus timings info
               (selectBusesorStops == 1)
                   ? Column(
                 children: [
@@ -253,13 +282,15 @@ class _TravelPageState extends State<TravelPage> {
                   : SizedBox(),
             ],
           )
-              : Column(
+          //If ferry timings selected
+          :Column(
               children: Buses.map((e) {
                 return BusTile(
                   time: e['time'],
                   isLeft: e['status'],
                 );
-              }).toList())
+              }).toList()
+          )
         ],
       ),
     );
